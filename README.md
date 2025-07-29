@@ -4,8 +4,8 @@
 ##### Maps out the full scattering measurement
 
 
-####### Order to which display data collected
-######### 1. File Converter
-######### 2. File Reformatter
-######### 3. Rectanglular Grid
-######### 4. Polar Plot
+Order to which display data collected
+1. File Converter
+2. File Reformatter
+3. Rectanglular Grid
+4. Polar Plot
