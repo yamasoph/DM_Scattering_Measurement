@@ -1,4 +1,3 @@
-#!/bin/bash
 from PyQt5 import QtWidgets, QtCore, QtGui
 import sys, time, cv2, queue, gc, multiprocessing, json
 import numpy as np
@@ -133,6 +132,7 @@ class CameraWorker(QtCore.QThread):
             self.cam.stop()
             self.motor.setSpeed(0)
             self.encoder.stop()
+            self.stepper.disable()
             self.finished.emit(time.monotonic() - t0)
             gc.collect()
 
@@ -183,8 +183,8 @@ class CaptureApp(QtWidgets.QWidget):
         self.motor = Motor()
         self.en = encoder("4", "17", 'R', '5')
         self.motor.enable()
-        self.stepper = stepper()
-        self.stepper.enable()
+        self.step = stepper()
+        self.step.enable()
 
         self.folder_in = QtWidgets.QLineEdit("array")
         self.base_in = QtWidgets.QLineEdit("capture")
@@ -244,7 +244,7 @@ class CaptureApp(QtWidgets.QWidget):
             self.worker.wait()
         user_inputs = {"ExposureTime": self.exp_in.value(),"AnalogueGain": self.gain_in.value()}
         self.worker = CameraWorker(self.cam, self.folder_in.text(), self.base_in.text(),
-                                   self.motor_step.value(), self.azimuth_step.value(), user_inputs, self.display_queue, self.motor, self.en, self.stepper)
+                                   self.motor_step.value(), self.azimuth_step.value(), user_inputs, self.display_queue, self.motor, self.en, self.step)
         self.worker.progress.connect(self.log)
         #self.worker.finished.connect(lambda s: self.log(f"Done in {s:.2f} sec"))
         self.worker.finished.connect(lambda s: (self.log(f"Done in {s:.2f} sec"), self.start_btn.setEnabled(True))) #type:ignore
