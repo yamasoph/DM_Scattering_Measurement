@@ -3,6 +3,8 @@
 ##### Measures the full 360 degree projection of the scattering from the DM
 ##### Maps out the full scattering measurement
 
+Run is the folder in which all the files exist to actually control and run the setup. The GUI is run through Camera.py.
+
 
 Order to which display data collected in folder Data:
 1. File Converter
