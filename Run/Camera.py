@@ -1,3 +1,4 @@
+#!/bin/bash
 from PyQt5 import QtWidgets, QtCore, QtGui
 import sys, time, cv2, queue, gc, multiprocessing, json
 import numpy as np
@@ -7,6 +8,7 @@ from multiprocessing import Process, JoinableQueue
 from typing import SupportsFloat as Numeric
 from encoder import encoder
 from motors import Motor
+from motors import stepper
 
 class SaveWorker(Process):
     def __init__(self, save_queue, display_queue):
@@ -39,10 +41,11 @@ class CameraWorker(QtCore.QThread):
     progress = QtCore.pyqtSignal(str)
     finished = QtCore.pyqtSignal(float)
 
-    def __init__(self, cam, folder_base:str, base_name:str, motor_step:Numeric, azimuth_step:Numeric, metadata:dict, display_queue,motor, encoder): # , pid): #
+    def __init__(self, cam, folder_base:str, base_name:str, motor_step:Numeric, azimuth_step:Numeric, metadata:dict, display_queue,motor, encoder, stepper): # , pid): #
         super().__init__()
         self.cam = cam
         self.folder_base = Path(folder_base)
+        # self.folder_base = Path(r"/media/locsst/USB SKY/mapping")
         self.base_name = base_name
         self.motor_step = motor_step
         self.azimuth_step = azimuth_step
@@ -53,12 +56,19 @@ class CameraWorker(QtCore.QThread):
         self._stop = False
         self.interval = 6.0 / self.total_frames
         self.target_angles = list(np.arange(0, 180.0 + 0.01, float(motor_step)))
+        # self.total_iterations = list(np.arange(0, 180.0 + 0.01, float(azimuth_step)))
+        # self.total_frames = len(self.target_angles)
+        #self.target_angles = [float(i) * float(motor_step) for i in range(self.total_frames)]
         self.total_iterations = [i * float(azimuth_step) for i in range(int(180.0 / float(azimuth_step)))]
         self.motor = motor
         self.encoder = encoder
+        self.stepper = stepper
 
     def run(self):
         if not self.cam.started:
+            # cfg = self.cam.create_video_configuration(raw={"format": "SRGGB12", "size": (2028, 1520)}, controls ={"AeEnable": False, "AwbEnable": False, 
+            #                                                 "ExposureTime": self.metadata.get("ExposureTime"), "AnalogueGain": self.metadata.get("AnalogueGain"),
+            #                                                 "FrameRate": 40.01, "ScalerCrop": (0, 0, 4056, 3040)})
             cfg = self.cam.create_video_configuration(raw={"format": "R10", "size": self.cam.sensor_resolution}, controls={ "AeEnable": False,
                                                             "ExposureTime": self.metadata.get("ExposureTime"), "AnalogueGain": self.metadata.get("AnalogueGain"),
                                                             "FrameRate": 60.38, "ScalerCrop": (0, 0, 1456, 1088)})
@@ -79,22 +89,28 @@ class CameraWorker(QtCore.QThread):
         t0 = time.monotonic()
 
         try:
-            self.motor.setSpeed(480)
-            for i in self.total_iterations:
-                folder = self.folder_base / f"{self.base_name}_{i:05.1f}"
+            self.motor.setSpeed(420)
+            for i in self.total_iterations: #azimuth 
+                folder = self.folder_base / f"{self.base_name}_{i:06.2f}"
                 folder.mkdir(parents=True, exist_ok=True)
+                # start_time = time.monotonic()
                 frame_idx = 0
                 for j in self.target_angles:
                     if self._stop:
                         break
+                    # expected_timestamp = frame_idx * self.interval
                     while True:
                         degree = self.encoder.readDeg()
-                        print(degree)
+                        #print(degree)
                         if abs(degree - j) < 0.0675:
                             break
+                    # wait_time = (start_time + expected_timestamp) - time.monotonic()
+                    # if wait_time > 0:
+                    #     time.sleep(wait_time)
+                    # capture_start = time.monotonic()
                     raw_data = self.cam.capture_buffer("raw").data
                     buffer_bytes = bytes(raw_data)
-                    fname = folder / f"{self.base_name}_{i:05.1f}_{j:05.1f}"
+                    fname = folder / f"{self.base_name}_{i:06.2f}_{j:06.2f}"
 
                     for _ in range(10):
                         try:
@@ -102,10 +118,13 @@ class CameraWorker(QtCore.QThread):
                             break
                         except queue.Full:
                             continue
+                    # actual_timestamp = capture_start - start_time
                     if j % 20 == 0:
+                        # self.progress.emit(f"Captured {fname.name}, Timing Target: {expected_timestamp:.3f}s, Actual: {actual_timestamp:.3f}s")
                         self.progress.emit(f"Captured {fname.name}, Expected Angle: {j}, Actual Angle: {degree:.3f}, Time: {(time.monotonic() - t0):03.2f}")
                     frame_idx += 1
-                self.progress.emit("Saving files")
+                self.progress.emit("Saving files and stepping DM")
+                self.stepper.quarterStep()
                 save_queue.join()
 
         finally:
@@ -164,14 +183,16 @@ class CaptureApp(QtWidgets.QWidget):
         self.motor = Motor()
         self.en = encoder("4", "17", 'R', '5')
         self.motor.enable()
+        self.stepper = stepper()
+        self.stepper.enable()
 
         self.folder_in = QtWidgets.QLineEdit("array")
         self.base_in = QtWidgets.QLineEdit("capture")
-        self.motor_step = QtWidgets.QDoubleSpinBox(maximum=180.0, minimum=0.01, value=0.5)
-        self.azimuth_step = QtWidgets.QDoubleSpinBox(maximum=360.0, minimum=0.01, value=10.0)
-        self.exp_in = QtWidgets.QSpinBox(maximum=674181621, value=60)
-        self.gain_in = QtWidgets.QDoubleSpinBox(value=2.0
-        self.status = QtWidgets.QTextEdit(readOnly=True)
+        self.motor_step = QtWidgets.QDoubleSpinBox(maximum=180.0, minimum=0.01, value=0.5) # type: ignore
+        self.azimuth_step = QtWidgets.QDoubleSpinBox(maximum=360.0, minimum=0.01, value=10.0) # type: ignore
+        self.exp_in = QtWidgets.QSpinBox(maximum=674181621, value=60) # type: ignore
+        self.gain_in = QtWidgets.QDoubleSpinBox(value=2.0) # type: ignore
+        self.status = QtWidgets.QTextEdit(readOnly=True) # type: ignore
         self.calibrate_btn = QtWidgets.QPushButton("Calibrate Settings")
         self.calibrate_btn.setStyleSheet("background-color : lightblue")
         self.calibrate_btn.clicked.connect(self.calibrate_camera)
@@ -181,7 +202,7 @@ class CaptureApp(QtWidgets.QWidget):
 
         self.image_preview = QtWidgets.QLabel("Preview")
         self.image_preview.setFixedHeight(272)
-        self.image_preview.setAlignment(QtCore.Qt.AlignCenter)
+        self.image_preview.setAlignment(QtCore.Qt.AlignCenter) #type:ignore
 
         layout.addRow("Save Folder:", self.folder_in)
         layout.addRow("Base Filename:", self.base_in)
@@ -223,9 +244,10 @@ class CaptureApp(QtWidgets.QWidget):
             self.worker.wait()
         user_inputs = {"ExposureTime": self.exp_in.value(),"AnalogueGain": self.gain_in.value()}
         self.worker = CameraWorker(self.cam, self.folder_in.text(), self.base_in.text(),
-                                   self.motor_step.value(), self.azimuth_step.value(), user_inputs, self.display_queue, self.motor, self.en)
+                                   self.motor_step.value(), self.azimuth_step.value(), user_inputs, self.display_queue, self.motor, self.en, self.stepper)
         self.worker.progress.connect(self.log)
-        self.worker.finished.connect(lambda s: (self.log(f"Done in {s:.2f} sec"), self.start_btn.setEnabled(True)))
+        #self.worker.finished.connect(lambda s: self.log(f"Done in {s:.2f} sec"))
+        self.worker.finished.connect(lambda s: (self.log(f"Done in {s:.2f} sec"), self.start_btn.setEnabled(True))) #type:ignore
         self.worker.start()
         self.log("Capture started...")
 
@@ -286,7 +308,7 @@ class CaptureApp(QtWidgets.QWidget):
             self.log(f"Camera stop error: {e}")
 
 
-    def closeEvent(self, event: QtGui.QCloseEvent):
+    def closeEvent(self, event: QtGui.QCloseEvent): #type:ignore
         try:
             self.stop()
         except Exception as e:
