@@ -3,7 +3,7 @@ import numpy as np
 import h5py
 from pathlib import Path
 
-data_root = Path("/home/locsst/Documents/camera/array")
+data_root = Path("array")
 image_shape = (1088, 1456) 
 pixel_deg_motor = 0.757185810663
 pixel_deg_azimuth = 0.567892973939
