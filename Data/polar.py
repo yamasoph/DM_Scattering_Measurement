@@ -17,7 +17,7 @@ if rect_img.shape[0] > rect_img.shape[1]:
 print("Rect_img shape is: ", rect_img.shape)
 azimuth_steps, motor_steps, _ = rect_img.shape
 # azimuth_steps, motor_steps - rect_img.shape
-
+rect_img = np.flip(rect_img, axis=1)
 #polar mesh
 theta = np.linspace(0, 2 * np.pi, azimuth_steps)
 r = np.linspace(0, 1, motor_steps)
