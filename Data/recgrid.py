@@ -62,12 +62,7 @@ with h5py.File(h5_path, "r") as f:
     ax.grid(True)
     plt.tight_layout()
 
-    # output_path = Path("rectangular_image.png")
-    # plt.savefig(output_path, dpi=300) 
-    # print(f"Image saved as {output_path}")
-
-    # plt.show()
-        #hide all axis elements for saving image
+    # #hide all axis elements for saving image
     # ax.axis('off')
 
     output_path = Path("reclongrungrid.png")
