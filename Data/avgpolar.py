@@ -20,7 +20,7 @@ with h5py.File(h5_file, "r") as f:
     angles = f["angles"]
 
     fig, ax = plt.subplots(figsize=(12, 12))
-    ax.set_title("Polar Wedge Map - Motor/Azimuth Grid (0° at top)")
+    ax.set_title("Polar Wedge Map - Motor/Azimuth Grid (0 at top)")
     ax.set_aspect("equal")
 
     ax.set_xlim(-100, 100)
@@ -38,7 +38,7 @@ with h5py.File(h5_file, "r") as f:
         img = images[idx]
         motor_angle, azimuth_angle = angles[idx]
 
-        #rotate azimuth angles so 0° is at top
+        #rotate azimuth angles so 0 is at top
         azimuth_angle_rotated = (azimuth_angle + azimuth_rotation) % 360
         #bowtie format for images    
         if azimuth_angle_rotated < azimuth_split:
@@ -109,7 +109,7 @@ with h5py.File(h5_file, "r") as f:
     max_radius = max([m - motor_center for m in motor_angles])
 
     for az in azimuth_angles:
-        #shift labels so 0° is at the top, counterclockwise
+        #shift labels so 0 is at the top, counterclockwise
         az_label_angle = (az - 270) % 360
 
         x0 = min_radius * np.cos(np.deg2rad(az_label_angle))
