@@ -1,6 +1,6 @@
 import socket
 
-IP_LIST = {"pi" : "##.##.##.##", "raspberrypi" : "##.##.##.##", "shortcake" : "-1", "ANY" : "0.0.0.0"}
+IP_LIST = {"pi" : "##.##.##.##", "raspberrypi" : "##.##.##.##", "shortcake" : "##.##.##.##", "ANY" : "0.0.0.0"}
 #pi and raspberry pi are the two pi 4s, shortcake is the pi 5, and ANY will let it recieve from any IP
 
 class skynet:
