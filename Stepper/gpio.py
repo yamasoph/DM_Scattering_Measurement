@@ -53,7 +53,6 @@ class gpio:
     
     def writePWM(self, pin, speed):
         if self._state == 4:
-            # self._pi.set_PWM_dutycycle(pin, pwm)
             self._pi.hardware_PWM(pin, 20000, int(speed * 6250 / 3))
         elif self._state == 5:
             sbc.tx_pwm(self._handle, pin, 20000, int(speed * 6250 / 3))#converts to percent

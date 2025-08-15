@@ -8,6 +8,7 @@ TIMEOUT = socket.timeout
 
 class skynet:
 
+    #sim should only be true in testing
     def __init__(self, host, IP, port, sim=False, receiveIP=IP_LIST["ANY"], receivePort=5560):
         self._host = host
         self._UDP_IP = IP
@@ -26,7 +27,6 @@ class skynet:
         if not sim:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-            # if not self._host:
             self._sock.settimeout(1)
             self._sock.bind((self._receiveIP, self._receivePort))
         self._sim = sim

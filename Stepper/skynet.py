@@ -6,6 +6,7 @@ IP_LIST = {"pi" : "##.##.##.##", "raspberrypi" : "##.##.##.##", "shortcake" : "#
 TIMEOUT = socket.timeout
 class skynet:
     
+    #sim should only be true in testing
     def __init__(self, host, IP, port, sendIP=IP_LIST["pi"], sendPort=5560):
         self._host = host
         self._UDP_IP = IP

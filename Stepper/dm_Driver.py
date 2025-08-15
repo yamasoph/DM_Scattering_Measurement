@@ -80,16 +80,18 @@ class stepper(object):
     def getFault(self):
         return self._pi.read(self._pinFault)
     
-    # not wired
+    # not wired, holds the same purpose as position but less practical since it is not an encoder just a counter
     def getIndex(self):
         return self._pi.read(self._pinIndex)
     
     def setDir(self, dir):
         self._dir = dir
         self._pi.write(self._pinDir, self._dir)
+    
     def getDir(self):
         return self._dir
         
+    # must be enabled for any movement and to hold microsteps
     def enable(self):
         self._pi.write(self._pinEN, 0)
         self._enabled = True
