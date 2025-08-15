@@ -1,7 +1,8 @@
 import socket
 import json
 
-IP_LIST = {"pi" : "10.157.16.245", "raspberrypi" : "10.157.50.64", "shortcake" : "-1", "ANY" : "0.0.0.0"}
+# actual list on PIs
+IP_LIST = {"pi" : "##.##.##.##", "raspberrypi" : "##.##.##.##", "shortcake" : "##.##.##.##", "ANY" : "0.0.0.0"}
 TIMEOUT = socket.timeout
 class skynet:
     
@@ -11,6 +12,9 @@ class skynet:
         self._UDP_Port = port
         self._sendIP = sendIP
         self._sendPort = sendPort
+        # The idea behind the steps is to confirm it is on the right step and did not miss anything
+        # The step functions will return false if more than one of any step is commanded since that would indicate it missed a step
+        # a better explnation is under the run directory's skynet
         self._steps = {'1' : 0, '2' : 0, '4' : 0, '8' : 0, 'D' : 0, '-1' : "A"}
         
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -34,6 +38,7 @@ class skynet:
         if direction != -1:
             self._steps['D'] == direction
     
+    #no need for stepper to send steps
     # def sendSteps(self):
     #     data = json.dumps(self._steps).encode('utf-8')
     #     self._sock.sendto(data, (self._UDP_IP, self._UDP_Port))
@@ -61,18 +66,3 @@ class skynet:
     
     def getSteps(self):
         return self._steps
-    
-if __name__ == "__main__":
-    sky = skynet(False, IP_LIST["ANY"], 5005)
-    from gpio import gpio, OUTPUT
-    g = gpio(4)
-    g.setMode(4, OUTPUT)
-    print("starting loop")
-    while True:
-        data = sky.recieve(1)
-        if (data == "T"):
-            print("running fan")
-            g.write(4, 1)
-        elif (data == "F"):
-            print("stopping fan")
-            g.write(4, 0)

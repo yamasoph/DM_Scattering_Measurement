@@ -28,77 +28,68 @@ class encoder{
             dir = 1;
 
             if (state == 'R'){
-            // portAPast = gpio_read(pi, portA);
-            // portBPast = gpio_read(pi, portB);
             portAPast = GPIO.read(portA);
             portBPast = GPIO.read(portB);
             while (run){
-                
-                // portAVal = gpio_read(pi, portA);
-                // portBVal = gpio_read(pi, portB);
 
                 portAVal = GPIO.read(portA);
                 portBVal = GPIO.read(portB);
                 
+                //for when the velocity is 0
                 if (double(chrono::duration_cast<chrono::duration<double>>(chrono::high_resolution_clock::now() - t1).count()) > 0.1){//adjust tollerance
-                //if (temp > 0.1){ //|| nearZeroFrequency){
                     frequency = 0;
                     output.velocity = frequency;
                     mem.write(output);
                     nearZeroFrequency = true;
-                    //t2 = chrono::high_resolution_clock::now();
                 }
-                // }else{
-                //     temp = chrono::duration_cast<chrono::duration<double>>(chrono::high_resolution_clock::now() - t1).count();
-                // }
-
+                //when there is an edge
                 if ((portAVal != portAPast) || (portBVal != portBPast)){
                     t1 = chrono::high_resolution_clock::now();
 
+                    //accounting for direction
                     dir = !(portAPast ^ portBVal);
                     position.d_val += dir? countPerEdge : -1 * countPerEdge;
+
+                    //accounting for wrapping
                     if (!((position.u_val ^ wrappingMask) & wrappingMask)){
                         position.d_val -= 1;
                     }
+                    //accounting for negative values
                     if (position.u_val & signbit){position.d_val += 1;}
-                    
-                    //if ((pastPosition.u_val & mask) != (position.u_val & mask)){//will only have an effect when acconting for gear ratio
-                        frequency = double(chrono::duration_cast<chrono::duration<double, micro>>(t1 - t2).count() * 0.000004);
-                        frequency =  1.0 / frequency;
-                        frequency = frequency / 12.0;
-                        frequency = frequency / 377.9330;
-                        output.position = position.d_val;
-                        pastFrequencies[increment] = frequency;
-                        if (frequency > 0.15 || frequency < -0.15){
-                            frequency = pastFrequencies[5];
-                        }else if (increment >= 4){
-                            frequency = 0;
-                            for (int i = 0; i <= 4; i ++){
-                                frequency += pastFrequencies[i];
-                            }
-                            frequency /= 5;
-                            pastFrequencies[5] = frequency;
-                            increment = 0;
-                        }else{
-                            pastFrequencies[increment++] = frequency;
-                            frequency = pastFrequencies[5];
+
+                    //getting velocity
+                    frequency = double(chrono::duration_cast<chrono::duration<double, micro>>(t1 - t2).count() * 0.000004);
+                    frequency =  1.0 / frequency;
+                    frequency = frequency / 12.0;
+                    frequency = frequency / 377.9330;
+
+                    //saving position to output
+                    output.position = position.d_val;
+                    //filtering
+                    pastFrequencies[increment] = frequency;
+                    if (frequency > 0.15 || frequency < -0.15){//not logical values for current setup, adjust if setup changes
+                        frequency = pastFrequencies[5];//first 5 values are raw data the 6th is the averaged velocity that is returned
+                    }else if (increment >= 4){
+                        frequency = 0;
+                        for (int i = 0; i <= 4; i ++){
+                            frequency += pastFrequencies[i];
                         }
-                        output.velocity = frequency;
-                        //output.velocity = (position.d_val - pastPosition.u_val) / (chrono::duration_cast<chrono::duration<double>>(t1 - t2).count());
-                        mem.write(output);
-                        //cout<<'v'<<output.velocity<<endl;
-                        //cout<<'p'<<output.position<<endl;
-                        pastPosition.d_val = position.d_val;
-                        t2 = t1;
-                        //nearZeroFrequency = false;
-                    //}else{
-                    //     mem.log("NOT WROTE: "+to_string(position.d_val));
-                    // }
+                        frequency /= 5;
+                        pastFrequencies[5] = frequency;
+                        increment = 0;
+                    }else{
+                        pastFrequencies[increment++] = frequency;
+                        frequency = pastFrequencies[5];
+                    }
+                    output.velocity = frequency;
+                    mem.write(output);//allowing for shared memory between threads
+                    pastPosition.d_val = position.d_val;
+                    t2 = t1;
                 }
                 portAPast = portAVal;
                 portBPast = portBVal;
             }
-            }else if (state == 'S'){
+            }else if (state == 'S'){//simulation that returns an increment used for testing
                 while (run){
                 if (true){
                     test.d_val += sim_increment;
@@ -138,25 +129,13 @@ class encoder{
             
             switch(state){
                 case 'R':{
-                    //mem.clearLogs();
-                    //mem.log("---REAL---");
-                    // set_mode(pi, portA, PI_INPUT);
-                    // set_mode(pi, portB, PI_INPUT);
-                    // set_mode(pi, 1, PI_OUTPUT);
-                    //mem.log("PortA: "+to_string(portA));
-                    //mem.log("PortB: "+to_string(portB));
-                    // gpio_write(pi, 1, 1);
                     GPIO.setMode(portA, PI_INPUT);
                     GPIO.setMode(portB, PI_INPUT);
                     break;
                 }
                 case 'S':
-                    //mem.clearLogs();
-                    //mem.log("---SIM---");
                     test.u_val = 0;
                     pastTest.u_val = 0;
-                    //mem.log("SIM PortA: "+to_string(portA));
-                    //mem.log("SIM PortB: "+to_string(portB));
                     break;
                 default:
                     //mem.log("---ERROR-IN-STATE---");
@@ -212,20 +191,9 @@ class encoder{
 
 
 
-
+//for ctypes in python
 extern "C"{
 
-// static PyObject *method_readPosition(PyObject *self, PyObject *args) {
-//     readMemory readMem(false);
-//     double data = readMem.read().position;
-//     return PyFloat_FromDouble(data);
-// }
-
-// static PyObject *method_readVelocity(PyObject *self, PyObject *args){
-//     readMemory readMem(false);
-//     double data = readMem.read().position;
-//     return PyFloat_FromDouble(data);
-// }
 double readPosition(){
     readMemory readMem(false);
     double data = readMem.read().position;
@@ -241,16 +209,11 @@ double readVelocity(){
 
 //takes args pinA, pinB, r/s (real or sim), and 4/5 (pi version)
 int main(int argc, const char* argv[]){
-    //int pi = pigpio_start(NULL, NULL);
     gpio GPIO(std::atoi(argv[4]));
     if (argc < 5){
         cout<<"ERROR TOO FEW ARGS"<<endl;
         return 1;
     }
-    // if (pi < 0){
-    //     cout<<"ERROR GPIO FAILED TO INITIALIZE"<<endl;
-    //     return 1;
-    // };
 
     encoder en(std::atoi(argv[1]), std::atoi(argv[2]), static_cast<char>(*argv[3]), GPIO);
     en.begin();

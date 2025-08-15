@@ -41,6 +41,8 @@ class stepper(object):
         self._pi.write(self._pinStep, 0)
         self._pi.write(self._pinEN, 1)
         
+    # this is the step command by default it is an eight step due to the board
+    # if you would like to go lower you can check the data sheet for specifics, MS1 and MS2 will need to be wired as well
     def _step(self, MS1, MS2):
         self._pi.write(self._pinStep, 1)
         # self._pi.write(self._pinMS1, MS1)
@@ -74,9 +76,11 @@ class stepper(object):
     def enabled(self):
         return self._enabled
         
+    # not reading values it should so ignore until fixed
     def getFault(self):
         return self._pi.read(self._pinFault)
     
+    # not wired
     def getIndex(self):
         return self._pi.read(self._pinIndex)
     
@@ -112,7 +116,7 @@ class stepper(object):
         self._turnLEDON()
         time.sleep(0.5)
         self._turnLEDOFF()
-        
+       
     def castError(self):
         self._turnLEDON()
         self.disable()
@@ -152,7 +156,7 @@ class stepper(object):
             time.sleep(0.5)
             self._turnLEDOFF()
             
-    
+    #removed from main script
     def signalError(self):
         for i in range(3):
             self._turnLEDON()
@@ -161,8 +165,6 @@ class stepper(object):
             time.sleep(0.01)
     
     def confirmPos(self, sky):
-        # sky = skynet(True, IP_LIST["pi"], 5560)
-        # sky.send(str(self._position).encode())
         sky.send(str(self._position).encode())
         
 step = stepper()

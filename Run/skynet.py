@@ -16,6 +16,11 @@ class skynet:
         self._receiveIP = receiveIP
         self._receivePort = receivePort
 
+        # The reason the steps are held as a dictionary is in case a step is missed
+        # How it works is it will send a message that is a json string of the dictionary then the other pi will send back a confirmation and do the steps commanded
+        # if the steps commanded are more than 1 of each than it will indicate it missed a step
+        # I could not figure out how to do confirmations without this since a confirmation could be missed and another message would be sent
+
         self._steps = {1 : 0, 2 : 0, 4 : 0, 8 : 0, 'D' : 0, -1 : ["A"]}
 
         if not sim:

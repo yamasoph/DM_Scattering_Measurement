@@ -81,6 +81,8 @@ class stepper(object):
         self._sky.updateSteps(direction=self._dir)
         self._sky.sendSteps()
 
+    #The local position will increase even if the motor is disabled so use remote position if you are commanding it while disabled
+
     def fullStep(self):
         self._sky.updateSteps(full=1)
         rval = self._sky.sendSteps()
@@ -139,6 +141,8 @@ class stepper(object):
         self._sky.updateSteps(other=["!"])
         self._sky.sendSteps()
 
+    # should always be very similar to local position the difference is floating point error
+    # slower than grabbing the local position so not recommended 
     def getRemotePosition(self):
         for i in range(5):
             self._sky.updateSteps(other=["$"])
@@ -158,6 +162,7 @@ class stepper(object):
     def resetPos(self):
         self._position = self.getRemotePosition()
 
+    # use this after you are finished, the stepper will stop recieving signals after it recieves this and close the loop so the logging file can be viewed
     def end(self):
         self._sky.updateSteps(other=["N"])
         self._sky.sendSteps()
