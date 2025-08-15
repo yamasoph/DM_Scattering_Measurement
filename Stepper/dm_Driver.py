@@ -1,5 +1,3 @@
-#main scipt runs on boot
-
 from gpio import gpio, OUTPUT, INPUT, DOWN
 import time
 from datetime import datetime
@@ -168,7 +166,7 @@ class stepper(object):
         sky.send(str(self._position).encode())
         
 step = stepper()
-sky = skynet(False, IP_LIST["ANY"], 5005, IP_LIST["pi"], 5560)
+sky = skynet(False, IP_LIST["ANY"], 5005, IP_LIST["shortcake"], 5560)
 try:
     step.confirmConnection()
     t = {datetime.now().strftime("%H:%M:%S")}
@@ -192,7 +190,7 @@ try:
         for i in recv:
             if i[0] != '-1':
                 if i[1] > 1:
-                    step.signalError()
+                    # step.signalError()
                     print(f"WARNING: {t} multiple {i[0]} steps at once ({i[1]})")
             match i[0]:
                 case '1':
