@@ -6,12 +6,12 @@ from matplotlib.collections import PatchCollection
 from pathlib import Path
 
 h5_file = Path("monolongrun.h5")
-pixel_deg_motor = 0.765598739109  # actual pixel width
-pixel_deg_azimuth = 0.572099528312
+pixel_deg_motor = 0.921202100973  # actual pixel width
+pixel_deg_azimuth = 0.688377359072
 motor_center = 90
 downsample = 45  # factor to reduce resolution for plotting
-motor_step_taken = 0.75
-azimuth_step_taken = 5.0
+motor_step_taken = 0.6
+azimuth_step_taken = 0.9
 
 with h5py.File(h5_file, "r") as f:
     images = f["images"]
@@ -31,7 +31,7 @@ with h5py.File(h5_file, "r") as f:
         print(f"Placing image {idx}/{len(images)}")
         img = images[idx]
         motor_angle, azimuth_angle = angles[idx]
-
+        img = np.rot90(img, k=-1) 
         #flip motor for second half
         if azimuth_angle < 90:
             motor = motor_angle
@@ -42,10 +42,10 @@ with h5py.File(h5_file, "r") as f:
         motor_shifted = motor - motor_center
         motor_position_idx = round(motor_shifted / motor_step_taken)
         mot_start = motor_position_idx * motor_step_taken
-        mot_end = mot_start + pixel_deg_motor  # size remains the actual motor pixel width
+        mot_end = mot_start + pixel_deg_azimuth  # size remains the actual motor pixel width
 
         az_start = azimuth_angle
-        az_end = az_start + pixel_deg_azimuth
+        az_end = az_start + pixel_deg_motor
 
         #downsample for display
         img = img[::downsample, ::downsample].astype(np.float32)
@@ -66,7 +66,7 @@ with h5py.File(h5_file, "r") as f:
         for i in range(h - 1):
             for j in range(w - 1):
                 poly = Polygon([(xs[i, j], ys[i, j]), (xs[i+1, j], ys[i+1, j]),
-                                (xs[i+1, j+1], ys[i+1, j+1]), (xs[i, j+1], ys[i, j+1])], closed=True, edgecolor='None', linewidth=0)
+                                (xs[i+1, j+1], ys[i+1, j+1]), (xs[i, j+1], ys[i, j+1])], closed=True, edgecolor='None', linewidth=0) # type: ignore
                 patches.append(poly)
                 colors.append(img[i, j])
 
