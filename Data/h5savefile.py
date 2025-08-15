@@ -2,7 +2,7 @@ import numpy as np
 import h5py
 from pathlib import Path
 
-data_root = Path("array")
+data_root = Path("array") #folder where all files are
 image_shape = (1088, 1456) 
 pixel_deg_motor = 0.921202100973 # angular resolution based on distance
 pixel_deg_azimuth = 0.688377359072
@@ -16,7 +16,7 @@ with h5py.File(output_path, "w") as f:
     angle_ds = f.create_dataset("angles", shape=(0, 2), maxshape=(None, 2), dtype=np.float32,  compression="gzip", chunks=(1, 2))
 
     idx = 0
-    for folder in sorted(data_root.glob("longrun_*")):
+    for folder in sorted(data_root.glob("longrun_*")): #folder name for the images
         azimuth = float(folder.name.split("_")[1])
         for file in sorted(folder.glob("*.raw")):
             motor = float(file.stem.split("_")[2])
