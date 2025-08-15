@@ -4,8 +4,8 @@ from pathlib import Path
 
 data_root = Path("array")
 image_shape = (1088, 1456) 
-pixel_deg_motor = 0.757185810663
-pixel_deg_azimuth = 0.567892973939
+pixel_deg_motor = 0.921202100973 # angular resolution based on distance
+pixel_deg_azimuth = 0.688377359072
 
 output_path = data_root / "monolongrun.h5"
 
